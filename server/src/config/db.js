@@ -1,16 +1,14 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-/**
- * Establish connection to the MongoDB Database.
- */
 const connectDB = async () => {
-    try {
-        const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/abyss_protocol');
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
-    } catch (error) {
-        console.error(`Database connection error: ${error.message}`);
-        console.warn('Server is running, but database connection could not be established.');
-    }
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error("MongoDB Connection Failed:", error.message);
+    process.exit(1);
+  }
 };
 
 module.exports = connectDB;
