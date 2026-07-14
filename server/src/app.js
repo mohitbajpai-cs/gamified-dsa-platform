@@ -36,8 +36,10 @@ app.use(helmet());
 const cors = require("cors");
 
 app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true
+    origin: "https://gamified-dsa-platform1.onrender.com",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // Parse incoming request bodies
