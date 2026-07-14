@@ -26,34 +26,23 @@ const adminProblemRoutes = require('./routes/adminProblem.routes.js');
 const adminTestCaseRoutes = require('./routes/adminTestCase.routes.js');
 const seedRoutes = require('./routes/seed.routes.js');
 const errorHandler = require('./middleware/error.middleware.js');
+const cors = require("cors");
 
 const app = express();
 
-// Set security HTTP headers
-app.use(helmet());
-
-// Enable CORS
-const cors = require("cors");
-
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  "http://localhost:5173"
-];
-
+// CORS must be registered BEFORE helmet so helmet cannot override CORS headers
 const corsOptions = {
-  origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, origin);
-    }
-    callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+    origin: "https://gamified-dsa-platform1.onrender.com",
+    credentials: true,
+    methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+    allowedHeaders: ["Content-Type","Authorization"]
 };
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
+
+// Set security HTTP headers (after CORS so headers are not overridden)
+app.use(helmet());
 
 // Parse incoming request bodies
 app.use(express.json({ limit: '16kb' }));
