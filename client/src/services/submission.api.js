@@ -1,7 +1,7 @@
 import api from './api';
 
-export const submitSolutionApi = async (problemId, code, language) => {
-    const response = await api.post('/submission', { problemId, code, language });
+export const submitSolutionApi = async (problemId, code, language, isSubmit = false) => {
+    const response = await api.post('/submission', { problemId, code, language, isSubmit });
     return response.data;
 };
 

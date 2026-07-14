@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getProblemByIdApi, getProblemsByTopicApi } from '../../services/world.api';
@@ -15,8 +15,8 @@ import { GiGothicCross, GiCompass, GiScrollUnfurled, GiCheckMark, GiUpgrade, GiC
 import { FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaTrashRestore, FaChevronRight, FaChevronLeft } from 'react-icons/fa';
 import { ROUTES } from '../../constants/routes';
 
-// Lazy Load Monaco Editor
-const Editor = lazy(() => import('@monaco-editor/react'));
+// Load Monaco Editor and its loader helper statically
+import Editor, { loader } from '@monaco-editor/react';
 
 const CodingArena = () => {
     const { problemId } = useParams();
@@ -40,6 +40,8 @@ const CodingArena = () => {
     const [unlockedAchievements, setUnlockedAchievements] = useState([]);
     const [bossHp, setBossHp] = useState(100);
 
+    const lastLoadedRef = useRef(null);
+
     // Sibling problem boundaries
     const [currentIdx, setCurrentIdx] = useState(-1);
     const [prevProblem, setPrevProblem] = useState(null);
@@ -49,19 +51,23 @@ const CodingArena = () => {
     useEffect(() => {
         const fetchProblem = async () => {
             setLoading(true);
+            setProblem(null); // Clear previous problem context immediately!
+            setCode('');      // Clear editor value to prevent stale code visibility
+            setExecuting(false);
+            setVerdict(null);
+            setVerdictDetails(null);
+            setVictoryOpen(false);
+            setRewards({});
+            setUnlockedAchievements([]);
+            setBossHp(100);
+            lastLoadedRef.current = null; // Block autosaving during transition
+
             try {
                 const res = await getProblemByIdApi(problemId);
                 if (res.success && res.data) {
                     const prob = res.data;
                     setProblem(prob);
-
-                    // Restore from localStorage or load default starterCode
-                    const savedCode = localStorage.getItem(`abyss_trial_${problemId}`);
-                    if (savedCode) {
-                        setCode(savedCode);
-                    } else {
-                        setCode(prob.starterCode || `// Write your javascript spell here\nfunction solve(input) {\n    return input;\n}`);
-                    }
+                    loadEditor(prob, language);
 
                     // Fetch sibling problems in the same topic for prev/next navigation bounds
                     const siblingsRes = await getProblemsByTopicApi(prob.topic);
@@ -85,22 +91,86 @@ const CodingArena = () => {
         fetchProblem();
     }, [problemId]);
 
+    // Helper to resolve starter code for a specific language
+    const getStarterCode = (prob, lang) => {
+        if (!prob) return '';
+        let codeVal = '';
+        if (prob.starterCode) {
+            if (typeof prob.starterCode === 'object') {
+                codeVal = prob.starterCode[lang] || prob.starterCode['javascript'] || '';
+            } else if (typeof prob.starterCode === 'string') {
+                if (lang === 'javascript') {
+                    codeVal = prob.starterCode;
+                }
+            }
+        }
+        if (!codeVal) {
+            const defaults = {
+                javascript: `function solve(input) {\n    // Write your code here\n}`,
+                c: `#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint main() {\n    // Write your code here\n    return 0;\n}`,
+                cpp: `#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}`,
+                java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`
+            };
+            codeVal = defaults[lang] || defaults.javascript;
+        }
+        return codeVal;
+    };
+
+    // Single source of truth function responsible for loading code
+    const loadEditor = (prob, lang) => {
+        if (!prob) {
+            setCode('');
+            return;
+        }
+        const draftKey = `draft_${prob._id}_${lang}`;
+        const savedCode = localStorage.getItem(draftKey);
+        
+        if (savedCode) {
+            setCode(savedCode);
+        } else {
+            const starter = getStarterCode(prob, lang);
+            setCode(starter);
+        }
+        
+        lastLoadedRef.current = { problemId: String(prob._id), language: lang };
+    };
+
+    // 1.5 Update Code when language changes safely
+    useEffect(() => {
+        if (problem && lastLoadedRef.current && lastLoadedRef.current.problemId === String(problem._id)) {
+            loadEditor(problem, language);
+        }
+    }, [language]);
+
+    // Cleanup stale Monaco models on route/language switches
+    useEffect(() => {
+        return () => {
+            loader.init().then((monaco) => {
+                const models = monaco.editor.getModels();
+                models.forEach(model => model.dispose());
+            }).catch(err => {});
+        };
+    }, [problemId, language]);
+
     // 2. Autosave Hook
     useEffect(() => {
-        if (code && problemId && !loading) {
-            localStorage.setItem(`abyss_trial_${problemId}`, code);
-            setSaveStatus('Saving Draft...');
-            const timer = setTimeout(() => {
-                setSaveStatus('Synced');
-            }, 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [code, problemId, loading]);
+        if (!code || !problemId || loading) return;
 
-    // Boss HP Calculation and Reset effects
-    useEffect(() => {
-        setBossHp(100);
-    }, [problemId]);
+        // Block saving if the current code doesn't match the active loaded problem + language
+        if (!lastLoadedRef.current || 
+            lastLoadedRef.current.problemId !== String(problemId) || 
+            lastLoadedRef.current.language !== language) {
+            return;
+        }
+
+        const draftKey = `draft_${problemId}_${language}`;
+        localStorage.setItem(draftKey, code);
+        setSaveStatus('Saving Draft...');
+        const timer = setTimeout(() => {
+            setSaveStatus('Synced');
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [code, problemId, loading, language]);
 
     useEffect(() => {
         if (problem && (problem.difficulty === 'boss' || problem.bossLevel) && verdictDetails) {
@@ -116,7 +186,9 @@ const CodingArena = () => {
     // 3. Reset Code
     const handleReset = () => {
         if (problem) {
-            setCode(problem.starterCode || `// Write your javascript spell here\nfunction solve(input) {\n    return input;\n}`);
+            const draftKey = `draft_${problem._id}_${language}`;
+            localStorage.removeItem(draftKey);
+            setCode(getStarterCode(problem, language));
             setSaveStatus('Reset');
         }
     };
@@ -133,7 +205,7 @@ const CodingArena = () => {
             if (isBossBattle && isSubmit) {
                 res = await submitBossSolutionApi(problem.world, code, language);
             } else {
-                res = await submitSolutionApi(problemId, code, language);
+                res = await submitSolutionApi(problemId, code, language, isSubmit);
             }
 
             if (res.success && res.data) {
@@ -143,11 +215,16 @@ const CodingArena = () => {
 
                 setVerdict(activeVerdict);
                 setVerdictDetails({
-                    errorMessage: submission.errorMessage,
-                    executionTime: submission.executionTime || 12,
-                    memoryUsed: submission.memoryUsed || 1024,
-                    testCasesPassed: submission.testCasesPassed || 0,
-                    totalTestCases: submission.totalTestCases || 3
+                    errorMessage: submission.errorMessage || submission.stderr || '',
+                    executionTime: submission.executionTime || submission.runtime || 12,
+                    memoryUsed: submission.memoryUsed || submission.memory || 1024,
+                    testCasesPassed: submission.passedCases !== undefined ? submission.passedCases : (submission.testCasesPassed || 0),
+                    totalTestCases: submission.totalCases !== undefined ? submission.totalCases : (submission.totalTestCases || 3),
+                    complexity: res.data.complexity,
+                    actualOutput: submission.actualOutput,
+                    expectedOutput: submission.expectedOutput,
+                    failedInput: submission.failedInput,
+                    isSubmit: isSubmit
                 });
 
                 if (activeVerdict === 'accepted') {
@@ -347,7 +424,9 @@ const CodingArena = () => {
                                     className="bg-black/45 border border-abyss-border/40 rounded px-2 py-1 text-white focus:outline-none focus:border-abyss-primary"
                                 >
                                     <option value="javascript">JavaScript</option>
-                                    <option value="python">Python (Mock)</option>
+                                    <option value="c">C</option>
+                                    <option value="cpp">C++</option>
+                                    <option value="java">Java</option>
                                 </select>
                                 <select 
                                     value={editorTheme}
@@ -361,13 +440,14 @@ const CodingArena = () => {
                         </div>
 
                         {/* Editor Canvas */}
-                        <div className="flex-1 border border-abyss-border/30 rounded-xl overflow-hidden min-h-[300px]">
+                        <div key={`container-${problemId}-${language}-${problem?._id || ''}-${problem?.updatedAt || ''}`} className="flex-1 border border-abyss-border/30 rounded-xl overflow-hidden min-h-[300px]">
                             <Suspense fallback={
                                 <div className="h-full flex items-center justify-center bg-black/40">
                                     <LoadingSpinner size="md" />
                                 </div>
                             }>
                                 <Editor
+                                    key={`${problemId}-${language}-${problem?._id || ''}-${problem?.updatedAt || ''}`}
                                     height="100%"
                                     language={language}
                                     theme={editorTheme}
@@ -476,14 +556,49 @@ const CodingArena = () => {
                                         )}
 
                                         {/* Wrong Answer Failed Case Visual */}
-                                        {verdict === 'wrong_answer' && problem.examples?.[0] && (
+                                        {verdict === 'wrong_answer' && !verdictDetails?.isSubmit && problem.examples?.[0] && (
                                             <div className="space-y-2 pt-1">
                                                 <span className="text-[9px] text-abyss-danger uppercase font-fantasy font-semibold tracking-wider block">Failed Test Case</span>
                                                 <div className="bg-black/45 border border-abyss-danger/25 p-3 rounded-lg font-mono text-[9px] space-y-1.5">
-                                                    <p><span className="text-abyss-muted">Input:</span> <span className="text-white break-all">{problem.examples[0].input}</span></p>
-                                                    <p><span className="text-abyss-muted">Expected:</span> <span className="text-green-400 break-all">{problem.examples[0].output}</span></p>
-                                                    <p><span className="text-abyss-muted">Output:</span> <span className="text-abyss-danger break-all">undefined</span></p>
+                                                    <p><span className="text-abyss-muted">Input:</span> <span className="text-white break-all">{verdictDetails?.failedInput !== undefined && verdictDetails?.failedInput !== null ? (typeof verdictDetails.failedInput === 'object' ? JSON.stringify(verdictDetails.failedInput) : String(verdictDetails.failedInput)) : (problem.examples[0].input || '')}</span></p>
+                                                    <p><span className="text-abyss-muted">Expected:</span> <span className="text-green-400 break-all">{verdictDetails?.expectedOutput !== undefined && verdictDetails?.expectedOutput !== null ? (typeof verdictDetails.expectedOutput === 'object' ? JSON.stringify(verdictDetails.expectedOutput) : String(verdictDetails.expectedOutput)) : (problem.examples[0].output || '')}</span></p>
+                                                    <p><span className="text-abyss-muted">Output:</span> <span className="text-abyss-danger break-all">{verdictDetails?.actualOutput !== undefined && verdictDetails?.actualOutput !== null ? (typeof verdictDetails.actualOutput === 'object' ? JSON.stringify(verdictDetails.actualOutput) : String(verdictDetails.actualOutput)) : 'undefined'}</span></p>
                                                 </div>
+                                            </div>
+                                        )}
+
+                                        {/* Complexity Analysis Card */}
+                                        {verdictDetails?.complexity && (
+                                            <div className="bg-black/35 border border-abyss-border/30 p-3 rounded-lg space-y-2.5">
+                                                <span className="text-[9px] uppercase tracking-wider text-abyss-gold font-fantasy font-bold block">Estimated Complexity</span>
+                                                
+                                                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono leading-normal">
+                                                    <div className="flex flex-col bg-black/40 p-2 rounded border border-abyss-border/10">
+                                                        <span className="text-abyss-muted text-[8px] uppercase">Time</span>
+                                                        <span className="text-white font-semibold text-xs mt-0.5">{verdictDetails.complexity.timeComplexity}</span>
+                                                    </div>
+                                                    <div className="flex flex-col bg-black/40 p-2 rounded border border-abyss-border/10">
+                                                        <span className="text-abyss-muted text-[8px] uppercase">Space</span>
+                                                        <span className="text-white font-semibold text-xs mt-0.5">{verdictDetails.complexity.spaceComplexity}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex items-center space-x-1.5 text-[9px] font-sans">
+                                                    <span className="text-abyss-muted">Confidence:</span>
+                                                    <span className={`px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-semibold
+                                                        ${verdictDetails.complexity.confidence === 'High' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : ''}
+                                                        ${verdictDetails.complexity.confidence === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : ''}
+                                                        ${verdictDetails.complexity.confidence === 'Low' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : ''}
+                                                    `}>
+                                                        {verdictDetails.complexity.confidence}
+                                                    </span>
+                                                </div>
+                                                
+                                                {verdictDetails.complexity.explanation && (
+                                                    <p className="text-[9px] text-abyss-muted leading-relaxed font-sans border-t border-abyss-border/10 pt-2">
+                                                        {verdictDetails.complexity.explanation}
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
                                     </div>

@@ -21,7 +21,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         { name: 'Achievements', path: ROUTES.ACHIEVEMENTS, icon: GiAchievement },
         { name: 'Guild', path: ROUTES.GUILD, icon: GiShield },
         { name: 'Profile', path: ROUTES.PROFILE, icon: GiEgyptianWalk },
-        { name: 'Settings', path: ROUTES.PROFILE, icon: GiGears },
+        { name: 'Settings', path: ROUTES.SETTINGS, icon: GiGears },
         { name: 'Admin Gates', path: ROUTES.ADMIN, icon: GiCastle, adminOnly: true }
     ];
 
@@ -62,6 +62,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 <Component
                                     key={link.name}
                                     {...pathProps}
+                                    end={!isAnchor}
                                     onClick={() => { if (toggleSidebar) toggleSidebar(); }}
                                     className={isAnchor 
                                         ? 'flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-fantasy uppercase tracking-wider transition-all duration-200 block text-abyss-muted hover:text-white hover:bg-abyss-hover/40'

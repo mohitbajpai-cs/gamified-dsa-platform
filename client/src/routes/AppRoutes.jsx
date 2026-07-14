@@ -17,6 +17,7 @@ const ProblemList = lazy(() => import('../pages/worlds/ProblemList'));
 const ProblemDetails = lazy(() => import('../pages/worlds/ProblemDetails'));
 const CodingArena = lazy(() => import('../pages/worlds/CodingArena'));
 const Profile = lazy(() => import('../pages/profile/Profile'));
+const Settings = lazy(() => import('../pages/profile/Settings'));
 const Leaderboard = lazy(() => import('../pages/leaderboard/Leaderboard'));
 const Achievements = lazy(() => import('../pages/achievements/Achievements'));
 const Admin = lazy(() => import('../pages/admin/Admin'));
@@ -80,7 +81,7 @@ const AppRoutes = () => {
                     <Route path={ROUTES.PROBLEM_DETAILS} element={<ProblemDetails />} />
                     <Route path={ROUTES.ARENA} element={<CodingArena />} />
                     <Route path={ROUTES.PROFILE} element={<Profile />} />
-                    <Route path="/settings" element={<Profile />} />
+                    <Route path={ROUTES.SETTINGS} element={<Settings />} />
                     <Route path={ROUTES.LEADERBOARD} element={<Leaderboard />} />
                     <Route path={ROUTES.ACHIEVEMENTS} element={<Achievements />} />
                     <Route path={ROUTES.ADMIN} element={<Admin />} />

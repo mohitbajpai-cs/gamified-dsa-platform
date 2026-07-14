@@ -30,6 +30,12 @@ const Worlds = () => {
     }, [showSplash]);
 
     useEffect(() => {
+        if (refreshProgress) {
+            refreshProgress();
+        }
+    }, []);
+
+    useEffect(() => {
         const fetchRealmsData = async () => {
             try {
                 const [worldsRes, progressRes] = await Promise.all([
@@ -50,8 +56,8 @@ const Worlds = () => {
                         const fantasyInfo = FANTASY_REALMS[index] || {};
                         
                         const isWorldCompleted = user?.completedWorlds?.includes(w._id.toString()) || 
-                            (progData?.completedProblems && w.totalProblems > 0 && 
-                             progData.completedProblems.filter(p => String(w._id) === String(p.world)).length >= w.totalProblems);
+                            (progData?.completedProblemsDetail && w.totalProblems > 0 && 
+                             progData.completedProblemsDetail.filter(p => String(w._id) === String(p.world)).length >= w.totalProblems);
 
                         return {
                             ...w,
@@ -59,11 +65,8 @@ const Worlds = () => {
                             isCompleted: isWorldCompleted,
                             isLocked: !isUnlocked,
                             bossUnlocked: progData ? (String(progData.currentWorld?._id) === String(w._id) && progData.bossUnlocked) : false,
-                            completedProblems: progData?.completedProblems?.filter(
-                                pId => {
-                                    const pWorldId = pId.world?._id || pId.world || '';
-                                    return String(pWorldId) === String(w._id);
-                                }
+                            completedProblems: progData?.completedProblemsDetail?.filter(
+                                p => String(p.world) === String(w._id)
                             ).length || 0
                         };
                     });

@@ -1,7 +1,7 @@
 import api from './api';
 
 export const getProgressApi = async () => {
-    const response = await api.get('/progress');
+    const response = await api.get(`/progress?_t=${Date.now()}`);
     return response.data;
 };
 

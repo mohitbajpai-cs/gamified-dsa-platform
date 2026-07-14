@@ -20,5 +20,6 @@ export const ROUTES = {
   GUILD: '/guild',
   NOTIFICATIONS: '/notifications',
   ANALYTICS: '/analytics',
-  ADMIN: '/admin'
+  ADMIN: '/admin',
+  SETTINGS: '/settings'
 };
