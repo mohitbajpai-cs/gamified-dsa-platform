@@ -6,8 +6,16 @@ export const loginApi = async (email, password) => {
 };
 
 export const registerApi = async (username, email, password) => {
-    const response = await api.post('/auth/register', { username, email, password });
-    return response.data;
+    console.log("registerApi called", { username, email });
+    console.log("Axios request sent to /auth/register");
+    try {
+        const response = await api.post('/auth/register', { username, email, password });
+        console.log("Backend response received successfully:", response.data);
+        return response.data;
+    } catch (err) {
+        console.error("Backend request failed in registerApi:", err);
+        throw err;
+    }
 };
 
 export const logoutApi = async () => {

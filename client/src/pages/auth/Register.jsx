@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
@@ -17,7 +17,12 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        console.log("Register page mounted");
+    }, []);
+
     const handleSubmit = async (e) => {
+        console.log("handleSubmit called");
         e.preventDefault();
         
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,11 +43,14 @@ const Register = () => {
         }
 
         setIsSubmitting(true);
+        console.log("registerUser called", { username, email });
         try {
             await registerUser(username, email, password);
+            console.log("registerUser succeeded");
             toast.success('Spell complete. Awakening registered!');
             navigate(ROUTES.DASHBOARD);
         } catch (error) {
+            console.error("registerUser failed inside handleSubmit:", error);
             toast.error(error.message || 'Verification rejected by the Protocol');
         } finally {
             setIsSubmitting(false);

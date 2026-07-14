@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, className = '' }) => {
+const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, className = '', ...props }) => {
     return (
         <motion.button
             whileHover={disabled ? {} : { y: -2, scale: 1.03 }}
@@ -17,6 +17,7 @@ const PrimaryButton = ({ children, onClick, type = 'button', disabled = false, c
                 relative overflow-hidden group
                 ${className}
             `}
+            {...props}
         >
             {/* Ambient Shine Sweep */}
             <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-shine pointer-events-none"></span>
