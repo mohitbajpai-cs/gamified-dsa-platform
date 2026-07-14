@@ -31,10 +31,7 @@ class AuthService {
         if (password.length < 6) {
             throw new ApiError(400, 'Password must be at least 6 characters long');
         }
-const mongoose = require("mongoose");
 
-console.log("Ready State:", mongoose.connection.readyState);
-console.log("Database:", mongoose.connection.db?.databaseName);
         // Check if username or email already exists
         const existingUser = await User.findOne({
             $or: [{ email: trimmedEmail }, { username: trimmedUsername }]

@@ -56,8 +56,8 @@ const problemSchema = new mongoose.Schema({
         index: true
     },
     starterCode: {
-        type: String,
-        default: ""
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
     },
     solutionTemplate: {
         type: String,
@@ -92,6 +92,11 @@ const problemSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
         index: true
+    },
+    comparisonMode: {
+        type: String,
+        enum: ['exact', 'unordered_array', 'unordered_matrix', 'floating', 'string', 'tree', 'linked_list'],
+        default: 'exact'
     }
 }, {
     timestamps: true

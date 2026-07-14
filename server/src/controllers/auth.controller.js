@@ -6,9 +6,7 @@ class AuthController {
     /**
      * Handles user registration.
      */
-   register = asyncHandler(async (req, res) => {
-    console.log("Request Body:", req.body);
-
+    register = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
 
     const newUser = await authService.registerUser({
@@ -33,7 +31,7 @@ class AuthController {
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days matching token expiry
         };
 
@@ -51,7 +49,7 @@ class AuthController {
         res.clearCookie('token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         });
 
         res.status(200).json(

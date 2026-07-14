@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['student', 'admin'],
+        enum: ['student', 'moderator', 'admin'],
         default: 'student'
     },
     avatar: {
@@ -55,6 +55,30 @@ const userSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    totalSolved: {
+        type: Number,
+        default: 0
+    },
+    completedTopics: {
+        type: [String],
+        default: []
+    },
+    completedWorlds: {
+        type: [String],
+        default: []
+    },
+    currentStreak: {
+        type: Number,
+        default: 0
+    },
+    longestStreak: {
+        type: Number,
+        default: 0
+    },
+    lastSolvedDate: {
+        type: Date,
+        default: null
+    },
     currentTitle: {
         type: String,
         default: ""
@@ -62,7 +86,49 @@ const userSchema = new mongoose.Schema({
     rank: {
         type: String,
         default: "Novice"
-    }
+    },
+    claimedRewards: {
+        type: [String],
+        default: []
+    },
+    unlockedAchievements: {
+        type: [String],
+        default: []
+    },
+    dailyLogin: {
+        streak: { type: Number, default: 0 },
+        lastLoginDate: { type: Date, default: null },
+        claimedToday: { type: Boolean, default: false }
+    },
+    rewardHistory: [
+        {
+            rewardType: { type: String },
+            xp: { type: Number, default: 0 },
+            coins: { type: Number, default: 0 },
+            rewardedAt: { type: Date, default: Date.now }
+        }
+    ],
+    bossesDefeated: {
+        type: [String],
+        default: []
+    },
+    realmCompletion: [
+        {
+            realmId: { type: mongoose.Schema.Types.ObjectId, ref: 'World' },
+            completionPct: { type: Number, default: 0 },
+            conquered: { type: Boolean, default: false }
+        }
+    ],
+    bossTrophies: {
+        type: [String],
+        default: []
+    },
+    contestRating: { type: Number, default: 1200 },
+    highestRating: { type: Number, default: 1200 },
+    contestsPlayed: { type: Number, default: 0 },
+    contestsWon: { type: Number, default: 0 },
+    contestBadges: { type: [String], default: [] },
+    bestRank: { type: Number, default: null }
 }, {
     timestamps: true
 });

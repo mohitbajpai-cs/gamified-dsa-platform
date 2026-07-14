@@ -37,11 +37,17 @@ class ProgressService {
 
         // 3. Consolidate completed problem IDs
         const completedProblemIds = [];
+        const completedProblemsDetail = [];
         progressDocs.forEach(p => {
             if (p.completedProblems) {
                 p.completedProblems.forEach(pId => {
-                    if (!completedProblemIds.includes(pId.toString())) {
-                        completedProblemIds.push(pId.toString());
+                    const idStr = pId.toString();
+                    if (!completedProblemIds.includes(idStr)) {
+                        completedProblemIds.push(idStr);
+                        completedProblemsDetail.push({
+                            _id: idStr,
+                            world: p.world.toString()
+                        });
                     }
                 });
             }
@@ -91,17 +97,39 @@ class ProgressService {
         // 6. Calculate level dynamics from submission helper
         const levelDetails = submissionService.getLevelDetails(user.xp);
 
+        // Calculate solved metrics
+        const allProblemsCount = await Problem.countDocuments();
+        const solvedProblems = completedProblemIds.length;
+        const solvedTopics = user.completedTopics ? user.completedTopics.length : 0;
+        const solvedWorlds = user.completedWorlds ? user.completedWorlds.length : 0;
+        const completionPercentage = allProblemsCount > 0 ? Math.round((solvedProblems / allProblemsCount) * 100) : 0;
+
         return {
+            level: levelDetails.level,
+            xp: user.xp,
+            nextLevelXP: levelDetails.nextLevelXP,
+            coins: user.coins,
             totalXP: user.xp,
             currentLevel: levelDetails.level,
-            nextLevelXP: levelDetails.nextLevelXP,
             totalCoins: user.coins,
-            currentStreak: activeWorldStreak,
             completedProblems: completedProblemIds,
+            completedProblemsDetail,
             unlockedWorlds: unlockedWorldsDocs,
             currentWorld: currentWorldDoc,
             bossUnlocked,
-            progressPercentage
+            progressPercentage,
+            // Gamification requirements
+            totalSolved: user.totalSolved || completedProblemIds.length,
+            currentStreak: user.currentStreak,
+            longestStreak: user.longestStreak,
+            completedTopics: user.completedTopics || [],
+            completedWorlds: user.completedWorlds || [],
+            achievements: user.achievements || [],
+            // Solved stats
+            solvedProblems,
+            solvedTopics,
+            solvedWorlds,
+            completionPercentage
         };
     }
 }

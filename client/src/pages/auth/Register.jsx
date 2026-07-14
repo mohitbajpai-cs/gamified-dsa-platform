@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { GiGothicCross } from 'react-icons/gi';
 
 const Register = () => {
-    const { register } = useAuth();
+    const { register: registerUser } = useAuth();
     const navigate = useNavigate();
 
     const [username, setUsername] = useState('');
@@ -39,7 +39,7 @@ const Register = () => {
 
         setIsSubmitting(true);
         try {
-            await register(username, email, password);
+            await registerUser(username, email, password);
             toast.success('Spell complete. Awakening registered!');
             navigate(ROUTES.DASHBOARD);
         } catch (error) {

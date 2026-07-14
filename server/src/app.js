@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
@@ -10,6 +9,17 @@ const topicRoutes = require('./routes/topic.routes.js');
 const problemRoutes = require('./routes/problem.routes.js');
 const submissionRoutes = require('./routes/submission.routes.js');
 const progressRoutes = require('./routes/progress.routes.js');
+const profileRoutes = require('./routes/profile.routes.js');
+const leaderboardRoutes = require('./routes/leaderboard.routes.js');
+const questRoutes = require('./routes/quest.routes.js');
+const achievementRoutes = require('./routes/achievement.routes.js');
+const rewardRoutes = require('./routes/reward.routes.js');
+const bossRoutes = require('./routes/boss.routes.js');
+const bossesRoutes = require('./routes/bosses.routes.js');
+const contestRoutes = require('./routes/contest.routes.js');
+const socialRoutes = require('./routes/social.routes.js');
+const analyticsRoutes = require('./routes/analytics.routes.js');
+const adminCustomRoutes = require('./routes/adminCustom.routes.js');
 const adminWorldRoutes = require('./routes/adminWorld.routes.js');
 const adminTopicRoutes = require('./routes/adminTopic.routes.js');
 const adminProblemRoutes = require('./routes/adminProblem.routes.js');
@@ -23,7 +33,12 @@ const app = express();
 app.use(helmet());
 
 // Enable CORS
-app.use(cors());
+const cors = require("cors");
+
+app.use(cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true
+}));
 
 // Parse incoming request bodies
 app.use(express.json({ limit: '16kb' }));
@@ -44,8 +59,19 @@ app.use('/api', problemRoutes); // mounts /api/problems/:topicId and /api/proble
 app.use('/api/submission', submissionRoutes); // mounts POST /api/submission
 app.use('/api/submissions', submissionRoutes); // mounts GET /api/submissions and GET /api/submissions/:problemId
 app.use('/api/progress', progressRoutes);
+app.use('/api/profile/stats', profileRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/quests', questRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/rewards', rewardRoutes);
+app.use('/api/boss', bossRoutes);
+app.use('/api/bosses', bossesRoutes);
+app.use('/api/contests', contestRoutes);
+app.use('/api/social', socialRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Register admin routes
+app.use('/api/admin', adminCustomRoutes);
 app.use('/api/admin/worlds', adminWorldRoutes);
 app.use('/api/admin/topics', adminTopicRoutes);
 app.use('/api/admin/problems', adminProblemRoutes);

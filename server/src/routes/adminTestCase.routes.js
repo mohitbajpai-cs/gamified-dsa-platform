@@ -4,7 +4,7 @@ const adminTestCaseController = require('../controllers/adminTestCase.controller
 const { protect, restrictTo } = require('../middleware/auth.middleware');
 
 // Protect all routes to Admin-only
-router.use(protect, restrictTo('admin'));
+router.use(protect, restrictTo('admin', 'moderator'));
 
 router.get('/', adminTestCaseController.getAll);
 router.post('/', adminTestCaseController.create);
