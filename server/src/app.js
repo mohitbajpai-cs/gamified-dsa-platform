@@ -35,7 +35,8 @@ const corsOptions = {
     origin: "https://gamified-dsa-platform1.onrender.com",
     credentials: true,
     methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
-    allowedHeaders: ["Content-Type","Authorization"]
+    allowedHeaders: ["Content-Type","Authorization"],
+    maxAge: 0
 };
 
 app.use(cors(corsOptions));
