@@ -35,8 +35,20 @@ app.use(helmet());
 // Enable CORS
 const cors = require("cors");
 
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    'http://localhost:5173'
+].filter(Boolean);
+
 app.use(cors({
-    origin: "https://gamified-dsa-platform1.onrender.com",
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost:'))) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
