@@ -63,7 +63,6 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        setLoading(true);
         try {
             const res = await loginApi(email, password);
             if (res.success && res.data) {
@@ -74,22 +73,17 @@ export const AuthProvider = ({ children }) => {
                 return res;
             }
             throw new Error(res.message || 'Login failed');
-        } finally {
-            setLoading(false);
+        } catch (err) {
+            throw err;
         }
     };
 
     const register = async (username, email, password) => {
-        console.log("AuthContext register called", { username, email });
-        setLoading(true);
         try {
             const res = await registerApi(username, email, password);
-            console.log("AuthContext registerApi response received inside context:", res);
             if (res.success) {
-                console.log("Registration succeeded, executing auto-login...");
                 // Auto login after successful registration
                 const loginRes = await loginApi(email, password);
-                console.log("Auto-login response received:", loginRes);
                 if (loginRes.success && loginRes.data) {
                     const userData = loginRes.data.user || loginRes.data;
                     setUser(userData);
@@ -100,10 +94,7 @@ export const AuthProvider = ({ children }) => {
             }
             throw new Error(res.message || 'Registration failed');
         } catch (err) {
-            console.error("Error inside AuthContext register:", err);
             throw err;
-        } finally {
-            setLoading(false);
         }
     };
 
