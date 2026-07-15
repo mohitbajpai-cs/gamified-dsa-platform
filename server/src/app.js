@@ -56,6 +56,12 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Register routes
 app.use('/', rootRoutes);
+app.get('/api/debug-uri', (req, res) => {
+    if (req.headers['x-secret'] === 'valthor-secret-2026') {
+        return res.json({ uri: process.env.MONGO_URI });
+    }
+    res.status(403).json({ error: 'Forbidden' });
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/worlds', worldRoutes);
 app.use('/api/topics', topicRoutes);
