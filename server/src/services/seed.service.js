@@ -36,26 +36,15 @@ class SeedService {
      * Executes the solution template code in a sandboxed V8 context to get the expected output.
      */
     runSolution(solutionCode, functionName, inputVal) {
-        const contextObject = {
-            inputArgs: inputVal,
-            result: null,
-            error: null
-        };
-        const sandbox = vm.createContext(contextObject);
-        const scriptCode = `
-            try {
+        try {
+            const fn = eval(`(function() {
                 ${solutionCode}
-                result = ${functionName}(inputArgs);
-            } catch (e) {
-                error = e.message;
-            }
-        `;
-        const script = new vm.Script(scriptCode);
-        script.runInContext(sandbox, { timeout: 1000 });
-        if (sandbox.error) {
-            throw new Error(`Solution evaluation error: ${sandbox.error}`);
+                return ${functionName};
+            })()`);
+            return fn(inputVal);
+        } catch (e) {
+            throw new Error(`Solution evaluation error: ${e.message}`);
         }
-        return sandbox.result;
     }
 
     /**
