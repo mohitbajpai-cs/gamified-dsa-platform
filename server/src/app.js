@@ -64,6 +64,9 @@ app.get('/api/db-diagnostics', async (req, res) => {
         const User = require('./models/user.model');
         const World = require('./models/world.model');
         
+        // List mongo-related env keys in process.env
+        const envKeys = Object.keys(process.env).filter(k => k.toLowerCase().includes('mongo') || k.toLowerCase().includes('db') || k.toLowerCase().includes('url'));
+        
         // List other database names in the cluster
         let dbList = [];
         try {
@@ -84,6 +87,7 @@ app.get('/api/db-diagnostics', async (req, res) => {
             success: true,
             dbName,
             host,
+            envKeys,
             dbList,
             userCount,
             worldCount,
