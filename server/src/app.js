@@ -56,6 +56,34 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Register routes
 app.use('/', rootRoutes);
+app.get('/api/db-diagnostics', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const dbName = mongoose.connection.name;
+        const host = mongoose.connection.host;
+        const User = require('./models/user.model');
+        const World = require('./models/world.model');
+        
+        const userCount = await User.countDocuments();
+        const worldCount = await World.countDocuments();
+        
+        // List up to 10 users and worlds safely (no passwords)
+        const users = await User.find({}, 'username email role').limit(10);
+        const worlds = await World.find({}, 'name order difficulty').limit(10);
+        
+        res.status(200).json({
+            success: true,
+            dbName,
+            host,
+            userCount,
+            worldCount,
+            users,
+            worlds
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/worlds', worldRoutes);
 app.use('/api/topics', topicRoutes);
