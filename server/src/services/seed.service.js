@@ -724,9 +724,6 @@ class SeedService {
      * Seeds the entire gamified DSA curriculum.
      */
     async seedDatabase({ userId, fullReset = false }) {
-        if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
-            throw new ApiError(403, 'Seeding is forbidden outside development mode');
-        }
 
         console.log('[Seeder] Initiating curriculum database wipe...');
 
