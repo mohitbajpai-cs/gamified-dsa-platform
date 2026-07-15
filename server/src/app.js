@@ -64,10 +64,19 @@ app.get('/api/db-diagnostics', async (req, res) => {
         const User = require('./models/user.model');
         const World = require('./models/world.model');
         
+        // List other database names in the cluster
+        let dbList = [];
+        try {
+            const adminDb = mongoose.connection.db.admin();
+            const result = await adminDb.listDatabases();
+            dbList = result.databases.map(d => d.name);
+        } catch (e) {
+            dbList = ['error: ' + e.message];
+        }
+        
         const userCount = await User.countDocuments();
         const worldCount = await World.countDocuments();
         
-        // List up to 10 users and worlds safely (no passwords)
         const users = await User.find({}, 'username email role').limit(10);
         const worlds = await World.find({}, 'name order difficulty').limit(10);
         
@@ -75,6 +84,7 @@ app.get('/api/db-diagnostics', async (req, res) => {
             success: true,
             dbName,
             host,
+            dbList,
             userCount,
             worldCount,
             users,
